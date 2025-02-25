@@ -1,17 +1,14 @@
-import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
+
+import { useGroups } from "../services/useGroups";
 import BackButton from "../components/BackButton";
 import GroupNav from "../components/GroupNav";
 import ParticipantBalance from "../components/ParticipantBalance";
 import Spinner from "../components/Spinner";
-import { getGroups } from "../services/apiGroups";
 
 function Balance() {
   const { groupId } = useParams();
-  const { isPending: isLoading, data: groups } = useQuery({
-    queryKey: ["groups"],
-    queryFn: getGroups,
-  });
+  const { isLoading, groups } = useGroups();
   if (isLoading) return <Spinner />;
 
   const [currentGroup] = groups.filter((group) => +group.id === +groupId);

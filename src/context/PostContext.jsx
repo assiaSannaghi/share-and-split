@@ -11,11 +11,21 @@ function PostProvider({ children }) {
     setParticipants([...participants, { id: participants.length + 1 }]);
   };
 
+  const inputStyles = [
+    "mb-2",
+    "py-4",
+    "px-4",
+    "rounded-xl",
+    "text-m",
+    "bg-gray-100",
+  ];
+
   return (
     <PostContext.Provider
       value={{
         handleAddParticipant,
         participants,
+        inputStyles,
       }}
     >
       {children}

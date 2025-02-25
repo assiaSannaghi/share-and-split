@@ -1,38 +1,18 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useNavigate } from "react-router";
 import { usePosts } from "../context/PostContext";
-import { createGroup } from "../services/apiGroups";
+import { useCreateGroup } from "../services/useCreateGroup";
+
 import Button from "./Button";
 import ButtonsContainer from "./ButtonsContainer";
 
 function FormGroup() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { register, handleSubmit, reset, formState } = useForm();
+  const { mutateCreateGroup, isCreating } = useCreateGroup();
   const { errors } = formState;
 
-  const { handleAddParticipant, participants } = usePosts();
-  const inputStyles = [
-    "mb-2",
-    "py-4",
-    "px-4",
-    "rounded-xl",
-    "text-m",
-    " bg-gray-100",
-  ];
-
-  const { mutate, isPending: isCreating } = useMutation({
-    mutationFn: createGroup,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      toast.success("New group successfully created");
-      reset();
-      navigate("/");
-    },
-    onError: (err) => toast.error(err.message),
-  });
+  const { handleAddParticipant, participants, inputStyles } = usePosts();
 
   function onSubmit(data) {
     const formData = {
@@ -45,7 +25,12 @@ function FormGroup() {
           fullName: value,
         })),
     };
-    mutate(formData);
+    mutateCreateGroup(formData, {
+      onSuccess: () => {
+        reset();
+        navigate("/");
+      },
+    });
   }
 
   function onError(errors) {
@@ -104,7 +89,7 @@ function FormGroup() {
         ))}
 
         <button
-          className="text-lg cursor-pointer font-semibold text-yellow-400 mb-5 py-1 text-left hover:underline "
+          className="text-lg cursor-pointer font-semibold text-yellow-400 mb-5 py-1 text-left hover:underline"
           onClick={(e) => handleAddParticipant(e)}
         >
           Add participant

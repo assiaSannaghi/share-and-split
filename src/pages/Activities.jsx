@@ -1,25 +1,20 @@
 import { Link, useParams } from "react-router";
-import { useQuery } from "@tanstack/react-query";
 
 import AddButton from "../components/AddButton";
 import BackButton from "../components/BackButton";
 import GroupNav from "../components/GroupNav";
 import Activity from "../components/Activity";
 import Spinner from "../components/Spinner";
-import { getActivities } from "../services/apiActivities";
 import { useGroups } from "../services/useGroups";
+import { useActivities } from "../services/useActivities";
 
 function Activities() {
   const { groupId } = useParams();
 
   const { isLoading: isLoadingGroups, groups } = useGroups();
+  const { isLoadingActivities, activities } = useActivities();
 
-  const { isPending: isLoadingActivies, data: activities } = useQuery({
-    queryKey: ["activities"],
-    queryFn: getActivities,
-  });
-
-  if (isLoadingGroups || isLoadingActivies) return <Spinner />;
+  if (isLoadingGroups || isLoadingActivities) return <Spinner />;
 
   const [currentGroup] = groups.filter((group) => +group.id === +groupId);
 

@@ -1,12 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import toast from "react-hot-toast";
 import { useNavigate, useParams } from "react-router";
 
-import { createActivity } from "../services/apiActivities";
-import { updateGroup } from "../services/apiGroups";
 import { useGroups } from "../services/useGroups";
+import { useCreateActivity } from "../services/useCreateActivity";
+import { useUpdateGroup } from "../services/useUpdateGroup";
 import Button from "./Button";
 import ButtonsContainer from "./ButtonsContainer";
 import Initial from "./Initial";
@@ -24,11 +22,12 @@ const inputStyles = [
 const DEFAULT_AMOUNT = 0;
 
 function FormActivity() {
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const { groupId } = useParams();
   const { isLoading, groups } = useGroups();
+  const { isCreating, mutateCreatingActivity } = useCreateActivity();
+  const { mutateUpdatingGroup, isUpdating } = useUpdateGroup();
 
   const [currentGroup] =
     groups?.filter((group) => +group.id === +groupId) || [];
@@ -37,41 +36,18 @@ function FormActivity() {
     useForm();
 
   const totalAmount = watch("activityAmount", DEFAULT_AMOUNT);
+
   useEffect(() => {
     if (currentGroup?.listParticipants?.length > 0) {
-      const splitAmount = totalAmount / currentGroup.listParticipants.length;
+      const splitAmount = Math.round(
+        totalAmount / currentGroup.listParticipants.length
+      );
 
       currentGroup.listParticipants.forEach((participant) => {
         setValue(`${participant.fullName}`, splitAmount.toFixed(2));
       });
     }
   }, [totalAmount, currentGroup, setValue]);
-
-  // console.log(currentGroup.listParticipants);
-
-  const { mutate: mutateCreatingActivity, isPending: isCreating } = useMutation(
-    {
-      mutationFn: createActivity,
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ["activities"] });
-        toast.success("New activity successfully created");
-        reset();
-        navigate(`/expenses/${groupId}`);
-      },
-      onError: (err) => toast.error(err.message),
-    }
-  );
-
-  const { mutate: mutateUpdatingGroup, isPending: isUpdating } = useMutation({
-    mutationFn: updateGroup,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["groups"] });
-      // toast.success("Group successfully updated");
-      // reset();
-      // navigate(`/expenses/${groupId}`);
-    },
-    onError: (err) => console.error(err.message),
-  });
 
   const { errors } = formState;
 
@@ -94,7 +70,12 @@ function FormActivity() {
         })),
     };
 
-    mutateCreatingActivity(formData);
+    mutateCreatingActivity(formData, {
+      onSuccess: () => {
+        reset();
+        navigate(`/expenses/${groupId}`);
+      },
+    });
 
     const updatedList = currentGroup.listParticipants.map((participant) => ({
       ...participant,
@@ -188,25 +169,32 @@ function FormActivity() {
       )}
       <div className="px-16">
         {currentGroup.listParticipants.map((participant) => (
-          <div key={participant.id} className="flex items-center">
-            <Initial>{participant.fullName}</Initial>
-            <label htmlFor={participant.fullName} className="font-semibold">
-              {participant.fullName}
-            </label>
-            <input
-              className={`${inputStyles.join(" ")} ml-auto`}
-              type="number"
-              id={participant.fullName}
-              defaultValue={DEFAULT_AMOUNT}
-              {...register(`${participant.fullName}`, {
-                required: "This field is required",
-              })}
-            />
-            {errors?.[`${participant.fullName}`]?.message && (
-              <p className="px-4 mb-3 font-bold text-red-500">
-                {errors[`${participant.fullName}`].message}
-              </p>
-            )}
+          <div
+            key={participant.id}
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center">
+              <Initial>{participant.fullName}</Initial>
+              <label htmlFor={participant.fullName} className="font-semibold">
+                {participant.fullName}
+              </label>
+            </div>
+            <div>
+              <input
+                className={`${inputStyles.join(" ")} ml-auto`}
+                type="number"
+                id={participant.fullName}
+                defaultValue={DEFAULT_AMOUNT}
+                {...register(`${participant.fullName}`, {
+                  required: "This field is required",
+                })}
+              />
+              {errors?.[`${participant.fullName}`]?.message && (
+                <p className="px-4 mb-3 font-bold text-red-500">
+                  {errors[`${participant.fullName}`].message}
+                </p>
+              )}
+            </div>
           </div>
         ))}
       </div>

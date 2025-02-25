@@ -25,13 +25,16 @@ export async function createActivity(newActivity) {
   return data;
 }
 
-// export async function deteleActivity(id) {
-//   const { data, error } = await supabase.from("activities").delete().eq("id", id);
+export async function deteleActivity(groupId) {
+  const { data, error } = await supabase
+    .from("activities")
+    .delete()
+    .eq("groupId", groupId);
 
-//   if (error) {
-//     console.error(error);
-//     throw new Error("Activity could not be deleted");
-//   }
+  if (error) {
+    console.error(error);
+    throw new Error("Activity could not be deleted");
+  }
 
-//   return data;
-// }
+  return data;
+}
